@@ -1,4 +1,4 @@
-import Papa from "papaparse";
+import { fetchAndParseCSV } from "./csv";
 
 export interface QuickLink {
   title: string;
@@ -22,51 +22,20 @@ const FALLBACK_CSV_DATA = `Timestamp,Link Title,Destination URL,Slug,Icon (Emoji
 `;
 
 export async function getQuickLinks(): Promise<QuickLink[]> {
-  if (!QL_CSV_URL) {
-    return parseCSV(FALLBACK_CSV_DATA);
-  }
+  const rows = await fetchAndParseCSV(QL_CSV_URL, FALLBACK_CSV_DATA);
 
-  let csvText = FALLBACK_CSV_DATA;
+  const links: QuickLink[] = rows.map((link) => ({
+    title: link["Link Title"] ?? "",
+    slug: link["Slug"] ?? "",
+    url: link["Destination URL"] ?? "#",
+    icon: link["Icon (Emoji)"] ?? "",
+    is_active: link["Is Active"] !== "FALSE",
+    order: link["Display Order"] ?? "0",
+  }));
 
-  try {
-    const response = await fetch(QL_CSV_URL, {
-      next: { revalidate: 3600 },
-    });
-    if (response.ok) {
-      csvText = await response.text();
-    }
-  } catch {
-    console.warn("Failed to fetch quick links CSV, using fallback data.");
-  }
+  const active = links
+    .filter((link) => link.is_active)
+    .sort((a, b) => Number(b.order) - Number(a.order));
 
-  return parseCSV(csvText);
-}
-
-async function parseCSV(csvText: string): Promise<QuickLink[]> {
-  return new Promise((resolve, reject) => {
-    Papa.parse<Record<string, string>>(csvText, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const links = results.data.map((link) => {
-          return {
-            title: link["Link Title"] ?? "",
-            slug: link["Slug"] ?? "",
-            url: link["Destination URL"] ?? "#",
-            icon: link["Icon (Emoji)"] ?? "",
-            is_active: link["Is Active"] !== "FALSE",
-            order: link["Display Order"] ?? "0",
-          };
-        });
-
-        const active = links
-          .filter((link) => link.is_active)
-          .sort((a, b) => Number(b.order) - Number(a.order));
-        resolve(active);
-      },
-      error: (error: Error) => {
-        reject(error);
-      },
-    });
-  });
+  return active;
 }

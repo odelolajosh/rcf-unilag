@@ -1,4 +1,4 @@
-import Papa from "papaparse";
+import { fetchAndParseCSV } from "./csv";
 
 export interface Sermon {
   id: string;
@@ -21,56 +21,23 @@ const FALLBACK_CSV_DATA = `Timestamp,Date Preached,Sermon Title,Speaker,Descript
 `;
 
 export async function getSermons(): Promise<Sermon[]> {
-  if (!SERMONS_CSV_URL) {
-    console.warn("No sermons CSV URL found, using fallback data.");
-    return resolveCSV(FALLBACK_CSV_DATA);
-  }
+  const rows = await fetchAndParseCSV(SERMONS_CSV_URL, FALLBACK_CSV_DATA);
 
-  let csvText = FALLBACK_CSV_DATA;
+  const sermons: Sermon[] = rows
+    .map((row, index) => ({
+      id: String(index + 1),
+      date: row["Date Preached"] ?? "",
+      title: row["Sermon Title"] ?? "",
+      speaker: row["Speaker"] ?? "",
+      description:
+        row["Description"] ||
+        "Watch this powerful message from our fellowship.",
+      youtube_link: row["YouTube Link"] ?? "",
+    }))
+    // Sort by date (newest first)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  try {
-    const response = await fetch(SERMONS_CSV_URL, {
-      next: { revalidate: 3600 },
-    });
-    if (response.ok) {
-      csvText = await response.text();
-    }
-  } catch (error) {
-    console.warn("Failed to fetch sermons CSV, using fallback data.");
-  }
-
-  return resolveCSV(csvText);
-}
-
-function resolveCSV(csv: string): Promise<Sermon[]> {
-  return new Promise((resolve, reject) => {
-    Papa.parse<Record<string, string>>(csv, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        const sermons = results.data
-          .map((row, index) => ({
-            id: String(index + 1),
-            date: row["Date Preached"],
-            title: row["Sermon Title"],
-            speaker: row["Speaker"],
-            description:
-              row["Description"] ||
-              "Watch this powerful message from our fellowship.",
-            youtube_link: row["YouTube Link"],
-          }))
-          // Sort by date (newest first)
-          .sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
-          ) as Sermon[];
-
-        resolve(sermons);
-      },
-      error: (error: Error) => {
-        reject(error);
-      },
-    });
-  });
+  return sermons;
 }
 
 export function getYouTubeVideoId(url: string): string | null {
