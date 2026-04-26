@@ -42,6 +42,7 @@ export async function Footer() {
                 width={64}
                 height={64}
                 loading="eager"
+                className="rounded-full"
               />
               <div className="flex flex-col">
                 <h3 className="font-display font-bold text-3xl leading-none tracking-tight">

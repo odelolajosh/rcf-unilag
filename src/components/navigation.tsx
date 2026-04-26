@@ -113,9 +113,10 @@ export function Navigation() {
           <Image
             src="/logo.png"
             alt="RCF UNILAG"
-            width={54}
-            height={54}
+            width={48}
+            height={48}
             loading="eager"
+            className="rounded-full"
           />
         </Link>
         {!isMobile && (
