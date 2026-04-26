@@ -2,29 +2,112 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion, useScroll, useTransform } from "motion/react";
 
-import { MenuIcon, XIcon } from "lucide-react";
+import { MenuIcon } from "lucide-react";
 import { Dialog as SheetPrimitive } from "radix-ui";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   NavigationMenu,
-  NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { NavLink } from "@/components/navlink";
 
+// ---------------------------------------------------------------------------
+// Scroll-aware nav config
+//
+// Add an entry for any route where the nav should start transparent and
+// transition to solid on scroll.
+//
+//   Key:   route pathname   (e.g. "/" or "/about")
+//   Value: scroll distance in px before the nav becomes solid.
+//          Use the special string "100vh" to match the full viewport height.
+//
+// Routes NOT listed here always display a solid black background.
+// ---------------------------------------------------------------------------
+export const NAV_SCROLL_CONFIG: Record<
+  string,
+  number | "100vh" | (() => number)
+> = {
+  "/": "100vh",
+};
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+export function useNavBackground() {
+  const pathname = usePathname();
+  const [threshold, setThreshold] = React.useState(0);
+
+  const routeConfig = NAV_SCROLL_CONFIG[pathname];
+  const isTransparentRoute = routeConfig !== undefined;
+
+  React.useEffect(() => {
+    if (!isTransparentRoute) return;
+
+    const calculateThreshold = () => {
+      let t = 0;
+      if (typeof routeConfig === "function") {
+        t = routeConfig();
+      } else if (routeConfig === "100vh") {
+        t = window.innerHeight;
+      } else {
+        t = routeConfig; // For hardcoded numbers
+      }
+
+      // Subtracting 100 as per your previous logic
+      setThreshold(Math.max(t - 100, 0));
+    };
+
+    // Run on mount
+    calculateThreshold();
+
+    // Recalculate if the user rotates their phone or resizes the browser
+    window.addEventListener("resize", calculateThreshold);
+    return () => window.removeEventListener("resize", calculateThreshold);
+  }, [pathname, isTransparentRoute, routeConfig]);
+
+  return { isTransparentRoute, threshold };
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 export function Navigation() {
   const isMobile = useIsMobile();
 
+  const { scrollY } = useScroll();
+  const { isTransparentRoute, threshold } = useNavBackground();
+
+  // 2. Define the "fade zone"
+  // Let's start the fade 150px BEFORE the threshold,
+  // and reach full opacity exactly AT the threshold.
+  const fadeStart = Math.max(0, threshold - 64);
+  const fadeEnd = threshold;
+
+  // 3. Map the scroll position to the background colors
+  const dynamicBackground = useTransform(
+    scrollY,
+    [fadeStart, fadeEnd],
+    ["rgba(0,0,0,0)", "rgba(0,0,0,1)"],
+  );
+
   return (
-    <div className="relative px-4 z-998">
+    <motion.div
+      className="fixed top-0 left-0 right-0 px-4 z-998"
+      style={{
+        backgroundColor: isTransparentRoute
+          ? dynamicBackground
+          : "rgba(0,0,0,1)",
+      }}
+    >
       <div className="h-16 max-w-7xl mx-auto flex items-center justify-between">
         <Link href="/">
           <Image
@@ -39,6 +122,14 @@ export function Navigation() {
           <NavigationMenu viewport={isMobile}>
             <NavigationMenuList className="flex-wrap">
               <NavigationMenuItem>
+                <NavigationMenuLink
+                  asChild
+                  className={navigationMenuTriggerStyle()}
+                >
+                  <Link href="/about">Who are we?</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              {/* <NavigationMenuItem>
                 <NavigationMenuTrigger>Who are we?</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid gap-2 md:w-[400px] lg:w-[500px] lg:grid-cols-[.75fr_1fr]">
@@ -64,16 +155,16 @@ export function Navigation() {
                     ></ListItem>
                   </ul>
                 </NavigationMenuContent>
-              </NavigationMenuItem>
+              </NavigationMenuItem> */}
 
-              <NavigationMenuItem>
+              {/* <NavigationMenuItem>
                 <NavigationMenuLink
                   asChild
                   className={navigationMenuTriggerStyle()}
                 >
                   <Link href="#">Blog</Link>
                 </NavigationMenuLink>
-              </NavigationMenuItem>
+              </NavigationMenuItem> */}
 
               {/* <NavigationMenuItem className="hidden md:block">
                 <NavigationMenuTrigger>Sermons</NavigationMenuTrigger>
@@ -146,7 +237,7 @@ export function Navigation() {
                   asChild
                   className={navigationMenuTriggerStyle()}
                 >
-                  <Link href="#">Quick links</Link>
+                  <Link href="/ql">Quick links</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
@@ -154,29 +245,59 @@ export function Navigation() {
         )}
         <NavigationDialog />
       </div>
-    </div>
+    </motion.div>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Mobile sheet dialog
+// ---------------------------------------------------------------------------
 function NavigationDialog() {
+  const [open, setOpen] = React.useState(false);
+  const linkClassName =
+    "font-display font-semibold text-2xl md:text-5xl text-white/70 hover:text-white data-[active=true]:text-primary data-[active=true]:hover:text-primary uppercase";
+  const close = () => setOpen(false);
+
   return (
-    <SheetPrimitive.Root data-slot="sheet">
+    <SheetPrimitive.Root data-slot="sheet" open={open} onOpenChange={setOpen}>
       <SheetPrimitive.Trigger data-slot="sheet-trigger">
-        <MenuIcon />
+        <MenuIcon className="text-white" />
       </SheetPrimitive.Trigger>
       <SheetPrimitive.Portal data-slot="sheet-portal">
         <SheetPrimitive.Overlay
           data-slot="sheet-overlay"
-          className="fixed inset-0 z-999 bg-black/70 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
+          className="fixed inset-0 z-999 isolate bg-black/80 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
         />
         <SheetPrimitive.Content
           data-slot="sheet-content"
           className={cn(
-            "fixed z-999 flex flex-col gap-4 bg-popover bg-clip-padding text-sm text-popover-foreground shadow-lg transition duration-200 ease-in-out data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-[side=bottom]:data-open:slide-in-from-bottom-10 data-[side=left]:data-open:slide-in-from-left-10 data-[side=right]:data-open:slide-in-from-right-10 data-[side=top]:data-open:slide-in-from-top-10 data-closed:animate-out data-closed:fade-out-0 data-[side=bottom]:data-closed:slide-out-to-bottom-10 data-[side=left]:data-closed:slide-out-to-left-10 data-[side=right]:data-closed:slide-out-to-right-10 data-[side=top]:data-closed:slide-out-to-top-10",
+            "fixed top-1/2 left-1/2 z-[1000] grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl p-4 text-sm text-white duration-100 outline-none sm:max-w-xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           )}
         >
-          <div data-slot="sheet-header" className="flex flex-col gap-0.5 p-4">
+          <SheetPrimitive.Title className="sr-only">
             RCF UNILAG
+          </SheetPrimitive.Title>
+
+          <div data-slot="sheet-header" className="flex flex-col gap-4 p-4">
+            <p className="font-semibold">RCF UNILAG</p>
+            <nav className="flex flex-col gap-8">
+              <NavLink href="/" className={linkClassName} onClick={close}>
+                Home
+              </NavLink>
+              <NavLink href="/about" className={linkClassName} onClick={close}>
+                Who are we?
+              </NavLink>
+              <NavLink
+                href="/sermons"
+                className={linkClassName}
+                onClick={close}
+              >
+                Sermons
+              </NavLink>
+              <NavLink href="/ql" className={linkClassName} onClick={close}>
+                Quick links
+              </NavLink>
+            </nav>
           </div>
         </SheetPrimitive.Content>
       </SheetPrimitive.Portal>
@@ -184,6 +305,9 @@ function NavigationDialog() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 function ListItem({
   title,
   children,
