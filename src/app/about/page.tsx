@@ -13,7 +13,7 @@ export default function About() {
       </div>
       <section className="section relative flex flex-col gap-24">
         <div className="max-w-3xl space-y-2 mx-auto">
-          <h1 className="text-5xl font-bold font-display tracking-tighter uppercase text-balance sm:text-6xl">
+          <h1 className="text-4xl font-bold font-display tracking-tighter uppercase text-balance sm:text-6xl">
             We are the{" "}
             <span className="text-primary">
               Redeemed Christian Fellowship, UNILAG

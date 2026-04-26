@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useScroll, useTransform } from "motion/react";
 
-import { MenuIcon } from "lucide-react";
+import { MenuIcon, X } from "lucide-react";
 import { Dialog as SheetPrimitive } from "radix-ui";
 
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -255,7 +255,7 @@ export function Navigation() {
 function NavigationDialog() {
   const [open, setOpen] = React.useState(false);
   const linkClassName =
-    "font-display font-semibold text-2xl md:text-5xl text-white/70 hover:text-white data-[active=true]:text-primary data-[active=true]:hover:text-primary uppercase";
+    "font-display font-black tracking-tighter text-3xl md:text-5xl text-white md:text-white/80 hover:text-white data-[active=true]:text-primary data-[active=true]:hover:text-primary uppercase";
   const close = () => setOpen(false);
 
   return (
@@ -266,21 +266,25 @@ function NavigationDialog() {
       <SheetPrimitive.Portal data-slot="sheet-portal">
         <SheetPrimitive.Overlay
           data-slot="sheet-overlay"
-          className="fixed inset-0 z-999 isolate bg-black/80 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
+          className="fixed inset-0 z-999 isolate bg-black/90 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0"
         />
         <SheetPrimitive.Content
           data-slot="sheet-content"
           className={cn(
-            "fixed top-1/2 left-1/2 z-[1000] grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl p-4 text-sm text-white duration-100 outline-none sm:max-w-xl data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            "fixed inset-0 z-[1000] gap-4 rounded-xl p-4 text-sm text-white duration-100 outline-none data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           )}
         >
-          <SheetPrimitive.Title className="sr-only">
-            RCF UNILAG
-          </SheetPrimitive.Title>
+          <header className="flex h-16 items-center justify-between">
+            <SheetPrimitive.Title className="font-display font-bold text-xl leading-none tracking-tighter text-center">
+              RCF<br />UNILAG
+            </SheetPrimitive.Title>
+            <SheetPrimitive.Close>
+              <X className="w-8 h-8" />
+            </SheetPrimitive.Close>
+          </header>
 
-          <div data-slot="sheet-header" className="flex flex-col gap-4 p-4">
-            <p className="font-semibold">RCF UNILAG</p>
-            <nav className="flex flex-col gap-8">
+          <div data-slot="sheet-header" className="flex h-[calc(100dvh-5rem)] flex-col justify-center gap-4 p-4">
+            <nav className="flex flex-col gap-4">
               <NavLink href="/" className={linkClassName} onClick={close}>
                 Home
               </NavLink>
@@ -295,7 +299,7 @@ function NavigationDialog() {
                 Sermons
               </NavLink>
               <NavLink href="/ql" className={linkClassName} onClick={close}>
-                Quick links
+                Links
               </NavLink>
             </nav>
           </div>
@@ -307,6 +311,7 @@ function NavigationDialog() {
 
 // ---------------------------------------------------------------------------
 // Helpers
+// Would be used later on for the desktop navigation links
 // ---------------------------------------------------------------------------
 function ListItem({
   title,
