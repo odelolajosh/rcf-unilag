@@ -190,11 +190,11 @@ export function WeAreRCFSection() {
     <section className="bg-muted">
       <div className="section flex flex-col gap-24">
         <div className="text-center flex flex-col gap-6">
-          <h1 className="text-6xl font-bold uppercase font-display tracking-tighter">
+          <h1 className="text-3xl md:text-6xl font-bold uppercase font-display tracking-tighter">
             We are RCF UNILAG
           </h1>
           <div className="flex justify-center">
-            <h2 className="relative text-6xl font-bold uppercase font-display tracking-tighter bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <h2 className="relative text-5xl md:text-6xl font-bold uppercase font-display tracking-tighter bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
               One Family
               <span className="absolute -inset-4 sm:-inset-6">
                 <HandwrittenCircle className="!w-full !h-full" />
