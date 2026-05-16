@@ -35,8 +35,8 @@ const pillars = [
     description: "At RCF UNILAG, we believe academic excellence is a spiritual responsibility. With God's help and our diligent Academic Unit, we provide the study materials and support you need to achieve excellent grades.",
     image:
       "/images/pillar-excellence.png",
-    ctaLabel: "Check Achievements",
-    ctaHref: "/about",
+    // ctaLabel: "Check Achievements",
+    // ctaHref: "/about",
     orientation: "image-left" as const,
   },
   // {
@@ -49,29 +49,6 @@ const pillars = [
   //   ctaHref: "/prayer",
   //   orientation: "image-right" as const,
   // },
-];
-
-const features = [
-  {
-    image:
-      "https://rcfunilag.com/wp-content/uploads/2023/05/Snapinsta.app_345309011_740436354489814_8763262030661234831_n_1024-e1685062328403.jpg.webp",
-    title: "The Word",
-    callToAction: "See sermons",
-    href: "",
-  },
-  {
-    image: "https://rcfunilag.com/wp-content/uploads/2023/05/rcf-exc.jpeg.webp",
-    title: "Excellence",
-    callToAction: "Check achievements",
-    href: "",
-  },
-  {
-    image:
-      "https://rcfunilag.com/wp-content/uploads/2023/05/Snapinsta.app_342729953_1062808808027284_8768411877360006972_n_1024.jpg",
-    title: "Prayer",
-    callToAction: "Drop prayer requests",
-    href: "",
-  },
 ];
 
 export default async function Home() {

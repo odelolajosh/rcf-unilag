@@ -10,8 +10,8 @@ export type PillarCardProps = {
   description: string;
   image: string;
   imageAlt?: string;
-  ctaLabel: string;
-  ctaHref: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   orientation?: "image-left" | "image-right";
 };
 
@@ -68,11 +68,13 @@ export function PillarCard({
             {description}
           </p>
 
-          <div className="mt-2">
-            <Button asChild variant="monochrome" className="rounded-full">
-              <Link href={ctaHref}>{ctaLabel}</Link>
-            </Button>
-          </div>
+          {ctaLabel && ctaHref && (
+            <div className="mt-2">
+              <Button asChild variant="monochrome" className="rounded-full">
+                <Link href={ctaHref}>{ctaLabel}</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div >
